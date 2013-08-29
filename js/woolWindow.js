@@ -6,17 +6,29 @@
 /*global window, $, jQuery, document */
 (function ($) {
     "use strict";
+    
+    var H = $('html'),
+        W = $(window),
+        D = $(document);
+        
+    
 
     $.fn.woolWindow = function (options) {
         var def = {
-
+            'minWidth': 500,
+            'minHeight': 500,
+            'padding': 10,
+            'marginTop': 10,
+            'tpl': {
+                'wrap': '<div class="wool-wrap"></div>'
+            }
         }, w;
 
         $.extend(def, options);
 
         return this.each(function () {
 
-            w = new woolWondow(this, def);
+            w = new woolWindow(this, def);
         });
     };
 } (jQuery));
