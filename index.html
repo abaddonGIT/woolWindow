@@ -9,13 +9,48 @@
             #imagesContener {
                 font-size: 0;
             }
+
             #imagesContener a {
                 display: inline-block;
                 vertical-align: top;
                 margin: 10px;
-                border: 4px solid #0D76B1;
-                border-radius: 3px;
             }
+
+            .wool-bg {
+                width: 100%;
+                overflow: hidden;
+                opacity: 0.2;
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 12;
+                background-color: #000; 
+            }
+
+            .wool-wrap {
+                overflow-x: hidden;
+                overflow-y: auto;
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 500;
+            }
+
+            .wool-content {
+                position: relative;
+                margin: 0 auto;
+                padding: 10px 0;
+            }
+
+            .wool-content table {
+                margin: 0 auto;
+            }
+
+            .woolBox {
+                border: 1px solid #ccc;
+                background-color: #fff;
+            }
+
         </style>
     </head>
 
@@ -23,28 +58,29 @@
         <h1>wool window DEMO</h1>
 
         <div id="imagesContener">
-            <a href="img/001.jpg" class="wool">
-                <img src="img/001.jpg" width="100" alt="тут имя" title="тут заголовок" />
+            <a href="img/001.jpg">
+                <img src="img/001.jpg" width="100" alt="name" title="description" />
             </a>
-            <a href="img/002.jpg" class="wool">
-                <img src="img/002.jpg" width="100" alt="тут имя" title="тут заголовок" />
+            <a href="img/002.jpg">
+                <img src="img/002.jpg" width="100" alt="name" title="description" />
             </a>
-            <a href="img/003.jpg" class="wool">
-                <img src="img/003.jpg" width="100" alt="тут имя" title="тут заголовок" />
+            <a href="img/003.jpg">
+                <img src="img/003.jpg" width="100" alt="name" title="description" />
             </a>
-            <a href="img/01.jpg" class="wool">
-                <img src="img/01.jpg" width="100" alt="тут имя" title="тут заголовок" />
+            <a href="img/01.jpg">
+                <img src="img/01.jpg" width="100" alt="name" title="description" />
             </a>
-            <a href="img/02.jpg" class="wool">
-                <img src="img/02.jpg" width="100" alt="тут имя" title="тут заголовок" />
-            </a>
-            <a href="img/03.jpg" class="wool">
-                <img src="img/03.jpg" width="100" alt="тут имя" title="тут заголовок" />
+            <a href="img/02.jpg">
+                <img src="img/02.jpg"  alt="name" title="description" />
             </a>
         </div>
 
         <script type="text/javascript">
+            $('a').click(function () {
+                $(this).woolWindow({});
 
+                return false;
+            });
         </script>
     </body>
 </html>
