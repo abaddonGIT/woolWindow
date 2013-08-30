@@ -40,6 +40,7 @@
                 position: relative;
                 margin: 0 auto;
                 padding: 10px 0;
+                overflow: hidden;
             }
 
             .wool-content table {
@@ -49,7 +50,20 @@
             .woolBox {
                 border: 1px solid #ccc;
                 background-color: #fff;
+            }
+
+            .wool-head {
+                padding-bottom: 5px;
+                clear: both;
+            }
+
+            .wool-mid {
                 text-align: center;
+            }
+
+            .wool-close {
+                text-decoration: none;
+                color: #000;
             }
 
         </style>
@@ -76,7 +90,6 @@
         <script type="text/javascript">
             $('a').click(function () {
                 $(this).woolWindow({});
-
                 return false;
             });
         </script>
