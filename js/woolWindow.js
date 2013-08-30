@@ -12,7 +12,7 @@
             D = $(d),
             w = window,
             W = $(w),
-            img, imgH, imgW, wool;
+            img, imgH, imgW, content, wool;
 
     $.woolWindow = function () {
         woolWindow.prototype[arguments[0]]();
@@ -121,11 +121,12 @@
     };
 
     woolWindow.prototype.buildWindow = function() {
-        var def = this.con, el = this.el, sizes = this.sizes, bg, wr, wl, wc, wb, ch, cw, ww, wh, content, k, newH, newW, newSize = [], wb_h, wb_m, contentHTML;
+        var def = this.con, W = this, el = this.el, sizes = this.sizes, bg, wr, wl, wc, wb, ch, cw, ww, wh, k, newH, newW, newSize = [], wb_h, wb_m, contentHTML;
 
         //добавляем задний фон
         bg = this.createEl(def.tpl.bgWool);
         bg.style.height = sizes.wH + 'px';
+        bg.style.opacity = def.opacity;
         this.bg = bg;
         //добавляем обертку для окна
         wr = this.createEl(def.tpl.wrapWool);
@@ -154,6 +155,10 @@
 
         this.wb.style.padding = def.inPadding + 'px';
 
+        //Добавляем контент в окно
+        this.wb_h = this.wb.querySelector('div.wool-head');
+        this.wb_m = this.wb.querySelector('div.wool-mid');
+
         //добавляем контент в блок
 
         switch (def.type) {
@@ -176,51 +181,71 @@
 
                 contentHTML = img;
 
+                W.show(sizes, contentHTML, cw);
+
                 break;
             case 'content':
                 var contentHTML = this.createEl(def.content);
                 img = contentHTML.querySelector('img.woolImg');
                 
                 if (img !== null) {
-                    //это настоящие размеры
-                    imgH = img.height;
-                    imgW = img.width;
+                    var src = img.src,
+                        phantom = new Image();
 
-                    //вычисляем новые размеры
-                    newSize = this.changeSize(sizes, imgH, imgW, cw);
+                    phantom.src = src;
+                    phantom.onload = function () {
+                        imgH = phantom.height;
+                        imgW = phantom.width;
+                        phantom = null;
+                        //вычисляем новые размеры
+                        newSize = W.changeSize(sizes, imgH, imgW, cw);
 
-                    console.log(sizes +'_'+ imgH +'_'+ imgW +'_'+ cw);
+                        img.style.cssText += 'width: ' + newSize[0] + 'px; height:' + newSize[1] + 'px;';
+                                    
+                        if (newSize[0] + def.inPadding * 2 < def.minWidth) {
+                            cw = def.minWidth;
+                        }
 
-                    img.style.cssText += 'width: ' + newSize[0] + 'px; height:' + newSize[1] + 'px;';
-                    
-                    if (newSize[0] + def.inPadding * 2 < def.minWidth) {
-                        cw = def.minWidth;
-                    }
+                        W.show(sizes, contentHTML, cw);
+                    };
+                } else {
+                    W.show(sizes, contentHTML, cw);
                 }
 
                 break;
         }
-
+    };
+    /*
+    * Выводит окно с контентом
+    */
+    woolWindow.prototype.show = function (sizes, contentHTML, cw) {
+        var  def = this.con, wb;
         content = contentHTML;
 
-        //Добавляем контент в окно
-        wb_h = this.wb.querySelector('div.wool-head');
-        wb_m = this.wb.querySelector('div.wool-mid');
-
         if (content !== undefined) {
-            wb_m.appendChild(content);
+            this.wb_m.appendChild(content);
         }
 
-        wr.appendChild(wl);
-
-        //console.log(newSize[0] + '||' + cw);
-
+        this.wr.appendChild(this.wl);
         this.wc.style.width = cw + 'px';
-       //this.wb_h.style.width = cw - def.inPadding*2 + 'px';
 
-        $('body').css('overflow', 'hidden').append(bg).append(wr);
+        $('body').css('overflow', 'hidden').append(this.bg).append(this.wr);
 
-    };
+        //тут добавляем эффекты при открытии
+        switch (def.effect) {
+            case 1:
+                this.wb.className += ' md-effect-1';
+                break;
+            case 2:
+                this.wb.className += ' md-effect-2';
+                break;
+        };
+
+        wb = this.wb;
+        setTimeout(function () {
+            $(wb).addClass('wool-show');
+        }, 200);
+    }
 
     /*
     * Ф-я изменения размера блока 
@@ -234,8 +259,6 @@
 
         newH = sizes.wH - def.padding - def.indentBot;//новая высота картинки
         newW = cw - def.inPadding * 2;//новая ширина картинки
-
-        console.log(newH + '||' + newW);
 
         //проверка на минимальные значения
 
@@ -333,8 +356,10 @@
             'indentBot': 100,
             'indentHor': 100,
             'fixSize': false,
-            'type': 'content',
-            'content': '<div><img src="img/001.jpg" class="woolImg" alt="" /><div>Curabitur egestas fermentum pulvinar. Pellentesque accumsan pulvinar orci a blandit. Suspendisse dapibus consectetur ultrices. Phasellus sed felis tortor. Morbi feugiat congue interdum. Proin fringilla scelerisque turpis, a ornare magna vehicula a. Duis consectetur felis in augue imperdiet varius. Donec vitae bibendum magna. Vivamus laoreet sed elit eu adipiscing. Integer blandit laoreet molestie. Nulla eget ante a purus commodo adipiscing a eget sapien. Ut sit amet accumsan nibh. Sed pretium neque quam, vel convallis leo molestie et. Aenean dictum tempor ligula, sit amet placerat enim malesuada ac. Quisque et nulla venenatis, placerat lorem quis, ornare sapien.'+
+            'opacity': 0.7,
+            'effect': 2,
+            'type': 'image',
+            'content': '<div><img src="img/001.jpg" alt="" class="woolImg" /><div>Curabitur egestas fermentum pulvinar. Pellentesque accumsan pulvinar orci a blandit. Suspendisse dapibus consectetur ultrices. Phasellus sed felis tortor. Morbi feugiat congue interdum. Proin fringilla scelerisque turpis, a ornare magna vehicula a. Duis consectetur felis in augue imperdiet varius. Donec vitae bibendum magna. Vivamus laoreet sed elit eu adipiscing. Integer blandit laoreet molestie. Nulla eget ante a purus commodo adipiscing a eget sapien. Ut sit amet accumsan nibh. Sed pretium neque quam, vel convallis leo molestie et. Aenean dictum tempor ligula, sit amet placerat enim malesuada ac. Quisque et nulla venenatis, placerat lorem quis, ornare sapien.'+
 'Vestibulum tincidunt quam turpis, sit amet imperdiet sem pulvinar id. Duis sodales sagittis sagittis. Vivamus ligula dolor, adipiscing ut nisl non, pellentesque aliquet sapien. Integer lobortis eleifend consectetur. Suspendisse potenti. In hac habitasse platea dictumst. Ut neque libero, dapibus in malesuada in, consequat tempus ipsum. Sed id vulputate erat, id convallis nunc. Phasellus eu mattis metus. Mauris nec eros pretium, accumsan risus ut, tempus quam. Fusce ut magna ut ligula ullamcorper vehicula id eget enim. Suspendisse potenti. Morbi lobortis lobortis semper. Vestibulum quis ligula enim.' +
 'Nullam pellentesque feugiat turpis sit amet laoreet. Nulla tempus ipsum sed nisl mattis congue. Duis rhoncus tellus vel auctor rutrum. Nunc luctus arcu at cursus gravida. Sed condimentum elit eget neque elementum fringilla. Morbi facilisis metus ipsum, suscipit iaculis dolor iaculis in. Etiam semper, urna at mollis feugiat, mi tellus egestas libero, a lobortis risus velit vitae risus. Donec eu nulla sem. Nulla varius metus eget nunc lacinia tristique. Etiam lobortis pulvinar aliquam. Praesent auctor ante quam, eu vestibulum ipsum posuere id.</div></div>',
             'tpl': {
