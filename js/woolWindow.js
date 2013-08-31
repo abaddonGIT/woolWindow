@@ -234,10 +234,39 @@
         //тут добавляем эффекты при открытии
         switch (def.effect) {
             case 1:
-                this.wb.className += ' md-effect-1';
+                this.wb.className += ' wool-effect-1';
                 break;
             case 2:
-                this.wb.className += ' md-effect-2';
+                this.wb.className += ' wool-effect-2';
+                break;
+            case 3: 
+                this.wb.className += ' wool-effect-3';
+                break;
+            case 4: 
+                this.wb.className += ' wool-effect-4';
+                break;
+            case 5: 
+                this.wc.className += ' perspective';
+                this.wb.className += ' wool-effect-5';
+                break;
+            case 6: 
+                this.wc.className += ' perspective';
+                this.wb.className += ' wool-effect-6';
+                break;
+            case 7: 
+                this.wc.className += ' perspective';
+                this.wb.className += ' wool-effect-7';
+                break;
+            case 8: 
+                this.wc.className += ' perspective';
+                this.wb.className += ' wool-effect-8';
+                break;
+            case 9: 
+                this.wb.className += ' wool-effect-9';
+                break;
+            case 10: 
+                this.wc.className += ' perspective';
+                this.wb.className += ' wool-effect-10';
                 break;
         };
 
@@ -357,7 +386,7 @@
             'indentHor': 100,
             'fixSize': false,
             'opacity': 0.7,
-            'effect': 2,
+            'effect': 1,
             'type': 'image',
             'content': '<div><img src="img/001.jpg" alt="" class="woolImg" /><div>Curabitur egestas fermentum pulvinar. Pellentesque accumsan pulvinar orci a blandit. Suspendisse dapibus consectetur ultrices. Phasellus sed felis tortor. Morbi feugiat congue interdum. Proin fringilla scelerisque turpis, a ornare magna vehicula a. Duis consectetur felis in augue imperdiet varius. Donec vitae bibendum magna. Vivamus laoreet sed elit eu adipiscing. Integer blandit laoreet molestie. Nulla eget ante a purus commodo adipiscing a eget sapien. Ut sit amet accumsan nibh. Sed pretium neque quam, vel convallis leo molestie et. Aenean dictum tempor ligula, sit amet placerat enim malesuada ac. Quisque et nulla venenatis, placerat lorem quis, ornare sapien.'+
 'Vestibulum tincidunt quam turpis, sit amet imperdiet sem pulvinar id. Duis sodales sagittis sagittis. Vivamus ligula dolor, adipiscing ut nisl non, pellentesque aliquet sapien. Integer lobortis eleifend consectetur. Suspendisse potenti. In hac habitasse platea dictumst. Ut neque libero, dapibus in malesuada in, consequat tempus ipsum. Sed id vulputate erat, id convallis nunc. Phasellus eu mattis metus. Mauris nec eros pretium, accumsan risus ut, tempus quam. Fusce ut magna ut ligula ullamcorper vehicula id eget enim. Suspendisse potenti. Morbi lobortis lobortis semper. Vestibulum quis ligula enim.' +
