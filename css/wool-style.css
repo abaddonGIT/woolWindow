@@ -64,6 +64,44 @@
                 text-decoration: none;
                 color: #000;
             }
+            /*Навигация*/
+
+            .woolNext, .woolPrev {
+                position: absolute;
+                display: none;
+                color: #fff;
+                top: 50%;
+                text-decoration: none;
+                -webkit-transition: all 0.7s;
+                -moz-transition: all 0.7s;
+                transition: all 0.7s;
+                opacity: 0;
+            }
+
+            .woolNext {
+                -webkit-transform: translateX(50px);
+                -moz-transform: translateX(50px);
+                -ms-transform: translateX(50px);
+                transform: translateX(50px);
+                right: 20px;
+            }
+
+            .woolPrev {
+                -webkit-transform: translateX(-50px);
+                -moz-transform: translateX(-50px);
+                -ms-transform: translateX(-50px);
+                transform: translateX(-50px);
+                left: 20px;
+            }
+
+            .woolNext.navShow,
+            .woolPrev.navShow {
+                -webkit-transform: translateX(0px);
+                -moz-transform: translateX(0px);
+                -ms-transform: translateX(0px);
+                transform: translateX(0px);
+                opacity: 1;
+            }
 
             /*Эффекты*/
             .wool-content.perspective {

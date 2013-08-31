@@ -11,8 +11,9 @@
             d = document,
             D = $(d),
             w = window,
+            colFlag = 0,
             W = $(w),
-            img, imgH, imgW, content, wool;
+            img, imgH, imgW, content, wool, imageCollection, index;
 
     $.woolWindow = function () {
         woolWindow.prototype[arguments[0]]();
@@ -22,6 +23,10 @@
         this.el = el;
         this.con = def;
         this.sizes = this.getWindowSize();
+        //если тип image и не стоит флаг одиночноо выбора тогда даем добро на создание коллекции
+        if (def.type === "image" && !def.justOne) {
+            colFlag = 1;
+        }
 
         console.log(this.sizes);
         //строим каркас
@@ -31,22 +36,86 @@
 
     };
 
+    /*
+    * Получает настаящие размеры изображения
+    */
+
+    woolWindow.prototype.getNewImage = function (src, next, callback) {
+        var Wool = this;
+        img = new Image();
+        img.src = src;
+        img.onerror = function () {
+            Wool.errors('Такого изображения не существует. Или был передан не правильный адрес.');
+        };
+        img.onload = function () {
+            imgH = img.height;
+            imgW = img.width;
+            content = img;
+            callback();
+        };
+    };
+
+    /*
+    * Вешает обработчики событий
+    */
     woolWindow.prototype.addEvent = function() {
-        var F = this, def = this.con;
+        var F = this, def = this.con, nextB = this.nextB, prevB = this.prevB, count = this.count, Wool = this, wb_m = this.wb_m;
 
         W.bind('resize.w', function() {
             //перестраиваем каркас
             F.rebuild();
         });
         //закрытие окна
-        $(d).on('click', '.wool-close', function () {
+        $(d).on('click.w', '.wool-close', function () {
             F.close();
+            return false;
+        });
+        //навигация
+        $(d).on('click.w', '.woolNext', function () {
+            var next = imageCollection[index + 1], nextImg;
+
+            if (next !== undefined) {
+                nextImg = next.href;
+                Wool.getNewImage(nextImg, next, function () {
+                    //перестраиваем окно
+                    Wool.rebuild();
+                    //подменяем изображение
+                    $(wb_m).html(content);
+                });
+                index++;
+                
+                if (imageCollection[index + 1] === undefined) {
+                    nextB.style.display = 'none';
+                }
+                prevB.style.display = 'block';
+            }
+            return false;
+        });
+
+        $(d).on('click.w', '.woolPrev', function () {
+            var prev = imageCollection[index - 1], prevImg;
+
+            if (prev !== undefined) {
+                prevImg = prev.href;
+                Wool.getNewImage(prevImg, prev, function () {
+                    //перестраиваем окно
+                    Wool.rebuild();
+                    //подменяем изображение
+                    $(wb_m).html(content);
+                });
+                index--;
+                
+                if (imageCollection[index - 1] === undefined) {
+                    prevB.style.display = 'none';
+                }
+                nextB.style.display = 'block';
+            }
             return false;
         });
     };
 
     /*
-     * Перестройка каркаса под новые размеры браузера
+     * Перестройка каркаса под новые размеры
      */
     woolWindow.prototype.rebuild = function() {
         var sizes = this.getWindowSize(), def = this.con, bg = this.bg, wr = this.wr, wl = this.wl, wc = this.wc, cw = sizes.xS - 100, ch = sizes.wH, newSize = [];
@@ -95,7 +164,8 @@
     */
 
     woolWindow.prototype.close = function () {
-        img = imgH = imgW = 0;
+        img = imgH = imgW = content = wool = imageCollection = index = null;
+
         if (this.wb === undefined || this.wr === undefined) {
             H.find('div.wool-bg').remove();
             H.find('div.wool-wrap').remove();
@@ -103,8 +173,10 @@
             $(this.bg).remove();
             $(this.wr).remove();
         }
-
+        //Удаляем событие для ресайза
         W.unbind('resize.w');
+        //адляем события переходов
+        $(d).off('click.w');
         $('body').css('overflow', 'auto');
     };
 
@@ -121,7 +193,7 @@
     };
 
     woolWindow.prototype.buildWindow = function() {
-        var def = this.con, W = this, el = this.el, sizes = this.sizes, bg, wr, wl, wc, wb, ch, cw, ww, wh, k, newH, newW, newSize = [], wb_h, wb_m, contentHTML;
+        var def = this.con, Wool = this, el = this.el, sizes = this.sizes, bg, wr, wl, wc, wb, ch, cw, ww, wh, k, newH, newW, newSize = [], wb_h, wb_m, contentHTML;
 
         //добавляем задний фон
         bg = this.createEl(def.tpl.bgWool);
@@ -181,7 +253,7 @@
 
                 contentHTML = img;
 
-                W.show(sizes, contentHTML, cw);
+                Wool.show(sizes, contentHTML, cw);
 
                 break;
             case 'content':
@@ -198,7 +270,7 @@
                         imgW = phantom.width;
                         phantom = null;
                         //вычисляем новые размеры
-                        newSize = W.changeSize(sizes, imgH, imgW, cw);
+                        newSize = Wool.changeSize(sizes, imgH, imgW, cw);
 
                         img.style.cssText += 'width: ' + newSize[0] + 'px; height:' + newSize[1] + 'px;';
                                     
@@ -206,15 +278,59 @@
                             cw = def.minWidth;
                         }
 
-                        W.show(sizes, contentHTML, cw);
+                        Wool.show(sizes, contentHTML, cw);
                     };
                 } else {
-                    W.show(sizes, contentHTML, cw);
+                    Wool.show(sizes, contentHTML, cw);
                 }
 
                 break;
         }
     };
+
+    /* 
+    * Создает коллекцию изображений для листалки
+    */
+    woolWindow.prototype.createCollection = function () {
+        //читае фттрибут rel или data-wool для находждения подобный элементов
+        var el = this.el, def = this.con, imgMark = el.rel || el.getAttribute('data-wool'), count, prevB, nextB;
+
+        if (imgMark !== undefined) {
+            imageCollection = d.querySelectorAll('a[rel=' + imgMark + ']') || d.querySelectorAll('a[data-wool=' + imgMark + ']');
+            imageCollection = $(imageCollection).toArray();
+            //кол-во элементов в коллекции
+            count = this.count = imageCollection.length;
+            //определяем индек элемента на котором произошел вызов
+            index = imageCollection.indexOf(el);
+            //если разрешена навигация и в наборе больше одного элемента
+            if (count > 1 && def.nav) {
+                prevB = this.prevB = this.createEl(def.tpl.prevTpl);
+                nextB = this.nextB = this.createEl(def.tpl.nextTpl); 
+
+                if (imageCollection[index - 1] !== undefined) {//если есть предыдущий
+                    this.prevB.style.display = 'block';
+                }
+
+                if (imageCollection[index + 1] !== undefined) {//если есть последуюший
+                    this.nextB.style.display = 'block';
+                } 
+
+                this.wc.appendChild(this.prevB);
+                this.wc.appendChild(this.nextB);
+
+                setTimeout (function () {
+                    if (nextB !== undefined) {
+                        nextB.className += ' navShow';
+                    }
+
+                    if (prevB !== undefined) {
+                        prevB.className += ' navShow';
+                    }
+                }, 700);
+            }
+        }
+    };
+
     /*
     * Выводит окно с контентом
     */
@@ -230,6 +346,10 @@
         this.wc.style.width = cw + 'px';
 
         $('body').css('overflow', 'hidden').append(this.bg).append(this.wr);
+        //добавляем навигацию
+        if (colFlag) {
+            this.createCollection();
+        }
 
         //тут добавляем эффекты при открытии
         switch (def.effect) {
@@ -388,6 +508,8 @@
             'opacity': 0.7,
             'effect': 1,
             'type': 'image',
+            'justOne': false,//пытается найти все подобные этому изображению и создать листалку
+            'nav': true,
             'content': '<div><img src="img/001.jpg" alt="" class="woolImg" /><div>Curabitur egestas fermentum pulvinar. Pellentesque accumsan pulvinar orci a blandit. Suspendisse dapibus consectetur ultrices. Phasellus sed felis tortor. Morbi feugiat congue interdum. Proin fringilla scelerisque turpis, a ornare magna vehicula a. Duis consectetur felis in augue imperdiet varius. Donec vitae bibendum magna. Vivamus laoreet sed elit eu adipiscing. Integer blandit laoreet molestie. Nulla eget ante a purus commodo adipiscing a eget sapien. Ut sit amet accumsan nibh. Sed pretium neque quam, vel convallis leo molestie et. Aenean dictum tempor ligula, sit amet placerat enim malesuada ac. Quisque et nulla venenatis, placerat lorem quis, ornare sapien.'+
 'Vestibulum tincidunt quam turpis, sit amet imperdiet sem pulvinar id. Duis sodales sagittis sagittis. Vivamus ligula dolor, adipiscing ut nisl non, pellentesque aliquet sapien. Integer lobortis eleifend consectetur. Suspendisse potenti. In hac habitasse platea dictumst. Ut neque libero, dapibus in malesuada in, consequat tempus ipsum. Sed id vulputate erat, id convallis nunc. Phasellus eu mattis metus. Mauris nec eros pretium, accumsan risus ut, tempus quam. Fusce ut magna ut ligula ullamcorper vehicula id eget enim. Suspendisse potenti. Morbi lobortis lobortis semper. Vestibulum quis ligula enim.' +
 'Nullam pellentesque feugiat turpis sit amet laoreet. Nulla tempus ipsum sed nisl mattis congue. Duis rhoncus tellus vel auctor rutrum. Nunc luctus arcu at cursus gravida. Sed condimentum elit eget neque elementum fringilla. Morbi facilisis metus ipsum, suscipit iaculis dolor iaculis in. Etiam semper, urna at mollis feugiat, mi tellus egestas libero, a lobortis risus velit vitae risus. Donec eu nulla sem. Nulla varius metus eget nunc lacinia tristique. Etiam lobortis pulvinar aliquam. Praesent auctor ante quam, eu vestibulum ipsum posuere id.</div></div>',
@@ -414,7 +536,9 @@
                         '</tbody>' +
                         '</table>' +
                         '</div>' +
-                        '</div>'
+                        '</div>',
+                'nextTpl': '<a href="#" class="woolNext">Вперед</a>',
+                'prevTpl': '<a href="#" class="woolPrev">Назад</a>'
             }
         }, w;
 
