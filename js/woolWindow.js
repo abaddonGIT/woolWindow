@@ -59,7 +59,7 @@
     * Вешает обработчики событий
     */
     woolWindow.prototype.addEvent = function() {
-        var F = this, def = this.con, nextB = this.nextB, prevB = this.prevB, count = this.count, Wool = this, wb_m = this.wb_m;
+        var F = this, def = this.con, nextB = this.nextB, prevB = this.prevB, count = this.count, Wool = this, wb_m = this.wb_m, wb_f = this.wb_f;
 
         W.bind('resize.w', function() {
             //перестраиваем каркас
@@ -76,10 +76,12 @@
 
             if (next !== undefined) {
                 nextImg = next.href;
+                var description = next.querySelector('img').getAttribute('title');
                 Wool.getNewImage(nextImg, next, function () {
                     //перестраиваем окно
                     Wool.rebuild();
                     //подменяем изображение
+                    wb_f.innerHTML = description;
                     $(wb_m).html(content);
                 });
                 index++;
@@ -97,10 +99,12 @@
 
             if (prev !== undefined) {
                 prevImg = prev.href;
+                var description = prev.querySelector('img').getAttribute('title');
                 Wool.getNewImage(prevImg, prev, function () {
                     //перестраиваем окно
                     Wool.rebuild();
                     //подменяем изображение
+                    wb_f.innerHTML = description;
                     $(wb_m).html(content);
                 });
                 index--;
@@ -228,8 +232,9 @@
         this.wb.style.padding = def.inPadding + 'px';
 
         //Добавляем контент в окно
-        this.wb_h = this.wb.querySelector('div.wool-head');
-        this.wb_m = this.wb.querySelector('div.wool-mid');
+        this.wb_h = this.wb.querySelector('div.wool-head');//шапка окна
+        this.wb_m = this.wb.querySelector('div.wool-mid');//центральная часть окна
+        this.wb_f = this.wb.querySelector('div.wool-footer');//подвал окна
 
         //добавляем контент в блок
 
@@ -241,6 +246,10 @@
                 //это настоящие размеры
                 imgH = img.height;
                 imgW = img.width;
+                //вытаскиваем описание
+                var description = el.querySelector('img').getAttribute('title');
+                //добавляем описание в окно
+                this.wb_f.innerHTML = description;
                 //вычисляем новые размеры
                 newSize = this.changeSize(sizes, imgH, imgW, cw);
 
@@ -283,6 +292,8 @@
                 } else {
                     Wool.show(sizes, contentHTML, cw);
                 }
+
+                this.wb_f.innerHTML = def.title;
 
                 break;
         }
@@ -506,10 +517,11 @@
             'indentHor': 100,
             'fixSize': false,
             'opacity': 0.7,
-            'effect': 1,
+            'effect': 5,
             'type': 'image',
             'justOne': false,//пытается найти все подобные этому изображению и создать листалку
             'nav': true,
+            'title': 'Тут какой-то заголовок',
             'content': '<div><img src="img/001.jpg" alt="" class="woolImg" /><div>Curabitur egestas fermentum pulvinar. Pellentesque accumsan pulvinar orci a blandit. Suspendisse dapibus consectetur ultrices. Phasellus sed felis tortor. Morbi feugiat congue interdum. Proin fringilla scelerisque turpis, a ornare magna vehicula a. Duis consectetur felis in augue imperdiet varius. Donec vitae bibendum magna. Vivamus laoreet sed elit eu adipiscing. Integer blandit laoreet molestie. Nulla eget ante a purus commodo adipiscing a eget sapien. Ut sit amet accumsan nibh. Sed pretium neque quam, vel convallis leo molestie et. Aenean dictum tempor ligula, sit amet placerat enim malesuada ac. Quisque et nulla venenatis, placerat lorem quis, ornare sapien.'+
 'Vestibulum tincidunt quam turpis, sit amet imperdiet sem pulvinar id. Duis sodales sagittis sagittis. Vivamus ligula dolor, adipiscing ut nisl non, pellentesque aliquet sapien. Integer lobortis eleifend consectetur. Suspendisse potenti. In hac habitasse platea dictumst. Ut neque libero, dapibus in malesuada in, consequat tempus ipsum. Sed id vulputate erat, id convallis nunc. Phasellus eu mattis metus. Mauris nec eros pretium, accumsan risus ut, tempus quam. Fusce ut magna ut ligula ullamcorper vehicula id eget enim. Suspendisse potenti. Morbi lobortis lobortis semper. Vestibulum quis ligula enim.' +
 'Nullam pellentesque feugiat turpis sit amet laoreet. Nulla tempus ipsum sed nisl mattis congue. Duis rhoncus tellus vel auctor rutrum. Nunc luctus arcu at cursus gravida. Sed condimentum elit eget neque elementum fringilla. Morbi facilisis metus ipsum, suscipit iaculis dolor iaculis in. Etiam semper, urna at mollis feugiat, mi tellus egestas libero, a lobortis risus velit vitae risus. Donec eu nulla sem. Nulla varius metus eget nunc lacinia tristique. Etiam lobortis pulvinar aliquam. Praesent auctor ante quam, eu vestibulum ipsum posuere id.</div></div>',
@@ -525,8 +537,12 @@
                         '<div class="woolBox">' +
                             '<a href="#" style="float: right;" class="wool-close">закрыть</a>' +
                             '<div class="wool-head">' +
+
                             '</div>' +
                             '<div class="wool-mid">' +
+
+                            '</div>' +
+                            '<div class="wool-footer">' +
 
                             '</div>' +
                         '</tr>' +
