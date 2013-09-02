@@ -405,7 +405,9 @@
         setTimeout(function () {
             $(wb).addClass('wool-show');
         }, 200);
-    }
+        //ф-я после прогрузки окна
+        def.afterLoad(this.wr, imageCollection, img);
+    };
 
     /*
     * Ф-я изменения размера блока 
@@ -555,7 +557,8 @@
                         '</div>',
                 'nextTpl': '<a href="#" class="woolNext">Вперед</a>',
                 'prevTpl': '<a href="#" class="woolPrev">Назад</a>'
-            }
+            },
+            'afterLoad': function (wr, collection, img) {}
         }, w;
 
         $.extend(def, options);
