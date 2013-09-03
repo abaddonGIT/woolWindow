@@ -13,11 +13,71 @@
             w = window,
             colFlag = 0,
             W = $(w),
-            img, imgH, imgW, content, wool, imageCollection, index, fragments;
+            img, imgH, imgW, content, wool, imageCollection, index, fragments,
+            Content = function (contentStrategy) {
+                this.contentStrategy = contentStrategy;
+            };
 
     $.woolWindow = function () {
         woolWindow.prototype[arguments[0]]();
-    }        
+    };
+
+    Content.prototype.render = function (Wool, cw, data) {
+        return this.contentStrategy(Wool, cw, data);
+    };
+
+    /*
+    *Стратегии рендеринга контента
+    */
+
+    //Для контента
+    var contentRenderStrategy = function (Wool, cw, data) {
+        var def = Wool.con, contentHTML, locImg, src, sizes = Wool.sizes, newSize = [];
+        //проверяем нет ли в контенте изображения
+        if (def.type === 'ajax') {
+            contentHTML = Wool.createEl(data);
+        } else {
+            contentHTML = Wool.createEl(def.content);
+        }
+
+        locImg = contentHTML.querySelector('img.woolImg');
+        if (locImg !== null) {
+            src = locImg.src;
+            Wool.getNewImage(src, function () {
+                //вычисляем новые размеры
+                newSize = Wool.changeSize(sizes, imgH, imgW, cw);
+                locImg.style.cssText += 'width: ' + newSize[0] + 'px; height:' + newSize[1] + 'px;';
+                if (newSize[0] + def.inPadding * 2 < def.minWidth) {
+                    cw = def.minWidth;
+                }
+                img = locImg;
+                locImg = null;
+                Wool.show(sizes, contentHTML, cw);
+            });
+        } else {
+            Wool.show(sizes, contentHTML, cw);
+        }
+    };
+    //Для картинок
+    var imageRenderStrategy = function (Wool, cw) {
+        var def = Wool.con, contentHTML, description, locImg, src, sizes = Wool.sizes, el = Wool.el, newSize = [];
+        
+        description = el.querySelector('img').getAttribute('title');
+        //добавляем описание в окно
+        Wool.wb_f.innerHTML = description;
+                
+        Wool.getNewImage(el.href, function () {
+            //вычисляем новые размеры
+            newSize = Wool.changeSize(sizes, imgH, imgW, cw);
+            img.style.cssText = 'width: ' + newSize[0] + 'px; height:' + newSize[1] + 'px;';
+            img.className = 'woolImg';
+            if (newSize[0] + def.inPadding * 2 < def.minWidth) {
+                cw = def.minWidth;
+            }
+                contentHTML = img;
+                Wool.show(sizes, contentHTML, cw);
+        });
+    };
 
     function woolWindow(el, def) {
         this.el = el;
@@ -27,13 +87,8 @@
         if (def.type === "image" && !def.justOne) {
             colFlag = 1;
         }
-
-        console.log(this.sizes);
         //строим каркас
         this.buildWindow();
-        //подключаем нужные события
-        this.addEvent();
-
     };
 
     /*
@@ -248,92 +303,26 @@
 
         switch (def.type) {
             case 'ajax':
+                var ajaxStrategy = new Content(contentRenderStrategy);
                 this.getAjaxContent(function (data) {
                     //смотрим в каком формате передан ответ
                     if (data instanceof Object) {
                         console.log('json');
                     } else {
-                        contentHTML = Wool.createEl(data);
-                        //проверяем нет ли в контенте изображения
-                        var locImg = contentHTML.querySelector('img.woolImg');
-
-                        if (locImg !== null) {
-                            var src = locImg.src;
-                            Wool.getNewImage(src, function () {
-                                //вычисляем новые размеры
-                                newSize = Wool.changeSize(sizes, imgH, imgW, cw);
-                                locImg.style.cssText += 'width: ' + newSize[0] + 'px; height:' + newSize[1] + 'px;';
-                                if (newSize[0] + def.inPadding * 2 < def.minWidth) {
-                                    cw = def.minWidth;
-                                }
-                                img = locImg;
-                                locImg = null;
-                                Wool.show(sizes, contentHTML, cw);
-                            });
-                        } else {
-                            Wool.show(sizes, contentHTML, cw);
-                        }
+                        ajaxStrategy.render(Wool, cw, data);
                     }
                 },cw);
                 this.wb_f.innerHTML = def.title;
                 break;
             case 'image':
-                //создаем изображение
-                img = new Image();
-                img.src = el.href;
-                //это настоящие размеры
-                imgH = img.height;
-                imgW = img.width;
-                //вытаскиваем описание
-                var description = el.querySelector('img').getAttribute('title');
-                //добавляем описание в окно
-                this.wb_f.innerHTML = description;
-                //вычисляем новые размеры
-                newSize = this.changeSize(sizes, imgH, imgW, cw);
-
-                img.style.cssText = 'width: ' + newSize[0] + 'px; height:' + newSize[1] + 'px;';
-                img.className = 'woolImg';
-
-                if (newSize[0] + def.inPadding * 2 < def.minWidth) {
-                    cw = def.minWidth;
-                }
-
-                contentHTML = img;
-
-                Wool.show(sizes, contentHTML, cw);
-
+                var imageStrategy = new Content(imageRenderStrategy);
+                imageStrategy.render(Wool, cw);
                 break;
             case 'content':
-                contentHTML = this.createEl(def.content);
-                img = contentHTML.querySelector('img.woolImg');
-                
-                if (img !== null) {
-                    var src = img.src,
-                        phantom = new Image();
-
-                    phantom.src = src;
-                    phantom.onload = function () {
-                        imgH = phantom.height;
-                        imgW = phantom.width;
-                        phantom = null;
-                        //вычисляем новые размеры
-                        newSize = Wool.changeSize(sizes, imgH, imgW, cw);
-
-                        img.style.cssText += 'width: ' + newSize[0] + 'px; height:' + newSize[1] + 'px;';
-                                    
-                        if (newSize[0] + def.inPadding * 2 < def.minWidth) {
-                            cw = def.minWidth;
-                        }
-
-                        Wool.show(sizes, contentHTML, cw);
-                    };
-                } else {
-                    Wool.show(sizes, contentHTML, cw);
-                }
-
-                this.wb_f.innerHTML = def.title;
-
+                var contentStrategy = new Content(contentRenderStrategy);
+                contentStrategy.render(Wool, cw);
                 break;
+                default:
         }
     };
 
@@ -426,6 +415,8 @@
         if (colFlag) {
             this.createCollection();
         }
+        //добавляем обработчики событий
+        this.addEvent();
 
         //тут добавляем эффекты при открытии
         switch (def.effect) {
@@ -605,7 +596,7 @@
             'justOne': false,//пытается найти все подобные этому изображению и создать листалку
             'nav': true,
             'title': 'Тут какой-то заголовок',
-            'content': '<div><img src="img/001.jpg" alt="" class="woolImg" /><div>Curabitur egestas fermentum pulvinar. Pellentesque accumsan pulvinar orci a blandit. Suspendisse dapibus consectetur ultrices. Phasellus sed felis tortor. Morbi feugiat congue interdum. Proin fringilla scelerisque turpis, a ornare magna vehicula a. Duis consectetur felis in augue imperdiet varius. Donec vitae bibendum magna. Vivamus laoreet sed elit eu adipiscing. Integer blandit laoreet molestie. Nulla eget ante a purus commodo adipiscing a eget sapien. Ut sit amet accumsan nibh. Sed pretium neque quam, vel convallis leo molestie et. Aenean dictum tempor ligula, sit amet placerat enim malesuada ac. Quisque et nulla venenatis, placerat lorem quis, ornare sapien.'+
+            'content': '<div><img src="img/002.jpg" alt="" class="woolImg" /><div>Curabitur egestas fermentum pulvinar. Pellentesque accumsan pulvinar orci a blandit. Suspendisse dapibus consectetur ultrices. Phasellus sed felis tortor. Morbi feugiat congue interdum. Proin fringilla scelerisque turpis, a ornare magna vehicula a. Duis consectetur felis in augue imperdiet varius. Donec vitae bibendum magna. Vivamus laoreet sed elit eu adipiscing. Integer blandit laoreet molestie. Nulla eget ante a purus commodo adipiscing a eget sapien. Ut sit amet accumsan nibh. Sed pretium neque quam, vel convallis leo molestie et. Aenean dictum tempor ligula, sit amet placerat enim malesuada ac. Quisque et nulla venenatis, placerat lorem quis, ornare sapien.'+
 'Vestibulum tincidunt quam turpis, sit amet imperdiet sem pulvinar id. Duis sodales sagittis sagittis. Vivamus ligula dolor, adipiscing ut nisl non, pellentesque aliquet sapien. Integer lobortis eleifend consectetur. Suspendisse potenti. In hac habitasse platea dictumst. Ut neque libero, dapibus in malesuada in, consequat tempus ipsum. Sed id vulputate erat, id convallis nunc. Phasellus eu mattis metus. Mauris nec eros pretium, accumsan risus ut, tempus quam. Fusce ut magna ut ligula ullamcorper vehicula id eget enim. Suspendisse potenti. Morbi lobortis lobortis semper. Vestibulum quis ligula enim.' +
 'Nullam pellentesque feugiat turpis sit amet laoreet. Nulla tempus ipsum sed nisl mattis congue. Duis rhoncus tellus vel auctor rutrum. Nunc luctus arcu at cursus gravida. Sed condimentum elit eget neque elementum fringilla. Morbi facilisis metus ipsum, suscipit iaculis dolor iaculis in. Etiam semper, urna at mollis feugiat, mi tellus egestas libero, a lobortis risus velit vitae risus. Donec eu nulla sem. Nulla varius metus eget nunc lacinia tristique. Etiam lobortis pulvinar aliquam. Praesent auctor ante quam, eu vestibulum ipsum posuere id.</div></div>',
             'tpl': {
