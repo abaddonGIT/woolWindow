@@ -13,7 +13,7 @@
             w = window,
             colFlag = 0,
             W = $(w),
-            img, imgH, imgW, content, wool, imageCollection, index;
+            img, imgH, imgW, content, wool, imageCollection, index, fragments;
 
     $.woolWindow = function () {
         woolWindow.prototype[arguments[0]]();
@@ -40,7 +40,7 @@
     * Получает настаящие размеры изображения
     */
 
-    woolWindow.prototype.getNewImage = function (src, next, callback) {
+    woolWindow.prototype.getNewImage = function (src, callback) {
         var Wool = this;
         img = new Image();
         img.src = src;
@@ -77,12 +77,14 @@
             if (next !== undefined) {
                 nextImg = next.href;
                 var description = next.querySelector('img').getAttribute('title');
-                Wool.getNewImage(nextImg, next, function () {
+                Wool.getNewImage(nextImg, function () {
                     //перестраиваем окно
                     Wool.rebuild();
                     //подменяем изображение
                     wb_f.innerHTML = description;
                     $(wb_m).html(content);
+
+                    def.nextFunction(fragments, next);
                 });
                 index++;
                 
@@ -100,12 +102,14 @@
             if (prev !== undefined) {
                 prevImg = prev.href;
                 var description = prev.querySelector('img').getAttribute('title');
-                Wool.getNewImage(prevImg, prev, function () {
+                Wool.getNewImage(prevImg, function () {
                     //перестраиваем окно
                     Wool.rebuild();
                     //подменяем изображение
                     wb_f.innerHTML = description;
                     $(wb_m).html(content);
+
+                    def.prevFunction(fragments, prev);
                 });
                 index--;
                 
@@ -140,6 +144,7 @@
             switch (def.type) {
                 case 'image':
                 case 'content':
+                case 'ajax':
                     if (img !== null) {
                         //находим картинку внутри блока
                         newSize = this.changeSize(sizes, imgH, imgW, cw);
@@ -154,6 +159,8 @@
                                 cw = def.maxWidth;
                             }
                         }
+
+                        def.afterUpdate(fragments, img, newSize[1], newSize[0]);
                     }
 
                     break;
@@ -174,6 +181,7 @@
             H.find('div.wool-bg').remove();
             H.find('div.wool-wrap').remove();
         } else {
+            this.con.beforeClose(img);
             $(this.bg).remove();
             $(this.wr).remove();
         }
@@ -239,6 +247,36 @@
         //добавляем контент в блок
 
         switch (def.type) {
+            case 'ajax':
+                this.getAjaxContent(function (data) {
+                    //смотрим в каком формате передан ответ
+                    if (data instanceof Object) {
+                        console.log('json');
+                    } else {
+                        contentHTML = Wool.createEl(data);
+                        //проверяем нет ли в контенте изображения
+                        var locImg = contentHTML.querySelector('img.woolImg');
+
+                        if (locImg !== null) {
+                            var src = locImg.src;
+                            Wool.getNewImage(src, function () {
+                                //вычисляем новые размеры
+                                newSize = Wool.changeSize(sizes, imgH, imgW, cw);
+                                locImg.style.cssText += 'width: ' + newSize[0] + 'px; height:' + newSize[1] + 'px;';
+                                if (newSize[0] + def.inPadding * 2 < def.minWidth) {
+                                    cw = def.minWidth;
+                                }
+                                img = locImg;
+                                locImg = null;
+                                Wool.show(sizes, contentHTML, cw);
+                            });
+                        } else {
+                            Wool.show(sizes, contentHTML, cw);
+                        }
+                    }
+                },cw);
+                this.wb_f.innerHTML = def.title;
+                break;
             case 'image':
                 //создаем изображение
                 img = new Image();
@@ -266,7 +304,7 @@
 
                 break;
             case 'content':
-                var contentHTML = this.createEl(def.content);
+                contentHTML = this.createEl(def.content);
                 img = contentHTML.querySelector('img.woolImg');
                 
                 if (img !== null) {
@@ -296,6 +334,33 @@
                 this.wb_f.innerHTML = def.title;
 
                 break;
+        }
+    };
+
+    /*
+    * Делает ajax запрос для получения контента
+    * param {Object} ф-я после успешного запроса,
+    * param {Int} ширина блока контента
+    */
+
+    woolWindow.prototype.getAjaxContent = function (callback, cw) {
+        var def = this.con, aj = def.ajax;
+
+        if (aj === undefined) {
+            this.errors('параметер ajax не передан!');
+        } else {
+            //выполняем запрос
+            $.ajax({
+                'type': 'POST',
+                'dataType': aj.dataType || 'html',
+                'processData': aj.processData || false,
+                'url': aj.url,
+                'data': aj.data || null,
+                'cache': aj.processData || false,
+                'success': function (data) {
+                    callback(data);
+                }
+            });
         }
     };
 
@@ -406,7 +471,16 @@
             $(wb).addClass('wool-show');
         }, 200);
         //ф-я после прогрузки окна
-        def.afterLoad(this.wr, imageCollection, img);
+        fragments = {
+            'wr': this.wr,
+            'head': this.wb_h,
+            'mid': this.wb_m,
+            'footer': this.wb_f,
+            'next': this.nextB,
+            'prev': this.prevB
+        };
+
+        def.afterLoad(fragments, imageCollection, img, imgH, imgW);
     };
 
     /*
@@ -519,8 +593,15 @@
             'indentHor': 100,
             'fixSize': false,
             'opacity': 0.7,
-            'effect': 5,
+            'effect': 9,
             'type': 'image',
+            'ajax': {
+                //'dataType': 'json',
+                'processData': true,
+                'url': 'test.php',
+                'data': {"name":"миня"},
+                'cache': false
+            },
             'justOne': false,//пытается найти все подобные этому изображению и создать листалку
             'nav': true,
             'title': 'Тут какой-то заголовок',
@@ -558,7 +639,11 @@
                 'nextTpl': '<a href="#" class="woolNext">Вперед</a>',
                 'prevTpl': '<a href="#" class="woolPrev">Назад</a>'
             },
-            'afterLoad': function (wr, collection, img) {}
+            'afterLoad': function (fragments, collection, img, imgH, imgW) {},
+            'beforeClose': function () {},
+            'nextFunction': function(fragments, next){},
+            'prevFunction': function(fragments, prev){},
+            'afterUpdate': function (fragments, img, imgH, imgW){}
         }, w;
 
         $.extend(def, options);
