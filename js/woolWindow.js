@@ -5,7 +5,7 @@
  * @version 1.0.0
  * ***************************************************/
 /*global window, $, jQuery, document */
-(function($) {
+(function ($) {
     "use strict";
     var H = $('html'),
             d = document,
@@ -19,7 +19,7 @@
             };
 
     $.woolWindow = function () {
-        woolWindow.prototype[arguments[0]]();
+        woolWindow.prototype[arguments[0]](arguments[1]);
     };
 
     Content.prototype.render = function (Wool, cw, data) {
@@ -89,6 +89,8 @@
         }
         //строим каркас
         this.buildWindow();
+
+        wool = this;
     };
 
     /*
@@ -228,25 +230,50 @@
     /*
     * Закрывает окно просмотра
     */
-
     woolWindow.prototype.close = function () {
-        img = imgH = imgW = content = wool = imageCollection = index = null;
+        img = imgH = imgW = content = imageCollection = index = null;
 
-        if (this.wb === undefined || this.wr === undefined) {
-            H.find('div.wool-bg').remove();
-            H.find('div.wool-wrap').remove();
-        } else {
-            this.con.beforeClose(img);
-            $(this.bg).remove();
-            $(this.wr).remove();
-        }
+        wool.con.beforeClose(img);
+        $(wool.bg).remove();
+        $(wool.wr).remove();
+        
         //Удаляем событие для ресайза
         W.unbind('resize.w');
         //адляем события переходов
         $(d).off('click.w');
         $('body').css('overflow', 'auto');
+        wool = null;
     };
+    /*
+    * Подстраивает под новое изображение
+    * param {String} адрес картинки на которую надо заменить
+    */
+    woolWindow.prototype.update = function (newImg) {
+        var def = wool.con, newSize, sizes = wool.sizes, cw;
 
+        cw = sizes.xS - 100;
+        //проверка на минимальный и максимальный размер
+        if (cw < def.minWidth) {
+            cw = def.minWidth;
+        } else {
+            if (cw > def.maxWidth) {
+                cw = def.maxWidth;
+            }
+        }
+
+        wool.getNewImage(newImg, function () {
+            //вычисляем новые размеры
+            newSize = wool.changeSize(sizes, imgH, imgW, cw);
+            img.style.cssText += 'width: ' + newSize[0] + 'px; height:' + newSize[1] + 'px;';
+            $(img).addClass('woolImg');
+            if (newSize[0] + def.inPadding * 2 < def.minWidth) {
+                cw = def.minWidth;
+            }
+            
+            wool.wc.style.width = cw + 'px';
+            $(wool.wb_m).find('img.woolImg').replaceWith(img);
+        });
+    }; 
     /*
      * Преобразует полученный html в объект dom и возвращает его
      * @param {String} html строка
@@ -290,7 +317,6 @@
         }
 
         this.wb = wl.querySelector('div.woolBox');
-        this.wt = wl.querySelector('div.woolTop');
 
         this.wb.style.padding = def.inPadding + 'px';
 
@@ -315,6 +341,7 @@
                 this.wb_f.innerHTML = def.title;
                 break;
             case 'image':
+                console.log('rebuild');
                 var imageStrategy = new Content(imageRenderStrategy);
                 imageStrategy.render(Wool, cw);
                 break;

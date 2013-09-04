@@ -27,9 +27,14 @@
         </div>
 
         <script type="text/javascript">
-            $('a').click(function () {
+            $('a[rel=woolImage]').click(function () {
                 $(this).woolWindow({});
                 return false;
+            });
+
+            $(document).on('click', '.wool-mid img', function () {
+                $.woolWindow('update','img/003.jpg');
+                //$(this).attr('src', 'img/02.jpg');
             });
         </script>
     </body>
