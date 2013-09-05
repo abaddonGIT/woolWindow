@@ -50,10 +50,11 @@ prevFunction - при переходе на предыдущий элемент,
 afterUpdate - после изменения размера окна.
 
 Пример:
-
+<code>
 $('a[rel=woolImage]').click(function () {
   $(this).woolWindow({'effect': 2});
   return false;
 });
+</code>
 
 
