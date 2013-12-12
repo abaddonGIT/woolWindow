@@ -83,7 +83,7 @@
         this.el = el;
         this.con = def;
         this.sizes = this.getWindowSize();
-        //если тип image и не стоит флаг одиночноо выбора тогда даем добро на создание коллекции
+        //если тип image и не стоит флаг одиночного выбора тогда даем добро на создание коллекции
         if (def.type === "image" && !def.justOne) {
             colFlag = 1;
         }
@@ -123,12 +123,12 @@
             F.rebuild();
         });
         //закрытие окна
-        $(d).on('click.w', '.wool-close', function () {
+        D.on('click.w', '.wool-close', function () {
             F.close();
             return false;
         });
         //навигация
-        $(d).on('click.w', '.woolNext', function () {
+        D.on('click.w', '.woolNext', function () {
             var next = imageCollection[index + 1], nextImg;
 
             if (next !== undefined) {
@@ -153,7 +153,7 @@
             return false;
         });
 
-        $(d).on('click.w', '.woolPrev', function () {
+        D.on('click.w', '.woolPrev', function () {
             var prev = imageCollection[index - 1], prevImg;
 
             if (prev !== undefined) {
@@ -188,7 +188,7 @@
         bg.style.height = sizes.wH + 'px';
         wr.style.cssText = 'width:' + sizes.wW + 'px; height:' + sizes.wH + 'px;';
         wl.style.width = sizes.xS + 'px';
-        //проверка минмальной ширины
+        //проверка минимальной ширины
         if (!def.fixSize) {//если включен фиксированный размер, то обновля ются только размеры контейнеров
             if (cw < def.minWidth) {
                 cw = def.minWidth;
